@@ -13,6 +13,7 @@
 #include "mamba/core/context.hpp"
 #include "mamba/core/util.hpp"
 #include "mamba/fs/filesystem.hpp"
+#include "mamba/core/thread_utils.hpp"
 
 #include "spdlog/spdlog.h"
 
@@ -40,6 +41,7 @@ namespace mamba
 
             std::unique_ptr<TemporaryDirectory> p_tempdir;
             fs::u8path tempdir_path;
+            interrupt_scope enable_interrupts;
 
             LockDirTest()
             {
@@ -199,6 +201,7 @@ namespace mamba
 
             std::unique_ptr<TemporaryFile> p_tempfile;
             fs::u8path tempfile_path;
+            interrupt_scope enable_interrupts;
 
             LockFileTest()
             {

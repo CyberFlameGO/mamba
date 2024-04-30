@@ -47,13 +47,13 @@ namespace mamba
         interrupt_scope& operator=(interrupt_scope&&) = delete;
     };
 
-    // #ifndef _WIN32
-    //     void set_signal_handler(const std::function<void(sigset_t)>& handler);
-    //
-    //     int stop_receiver_thread();
-    //     int kill_receiver_thread();
-    //     void reset_sig_interrupted();
-    // #endif
+    #ifndef _WIN32
+        void set_signal_handler(const std::function<void(sigset_t)>& handler);
+
+        int stop_receiver_thread();
+        int kill_receiver_thread();
+        void reset_sig_interrupted();
+    #endif
 
     void set_default_signal_handler();
     bool is_sig_interrupted() noexcept;

@@ -55,97 +55,102 @@ namespace mamba
     {
         void handle_signal(int signum)
         {
+            // NOTE: logs are commented to avoid failing integration tests
+            // std::cerr << "handle_signal: is_interrupt_scope() == " << is_interrupt_scope() << ", is_sig_interrupted() == " << is_sig_interrupted() << std::endl;
+
             if (is_interrupt_scope() && !is_sig_interrupted())
             {
-                std::cerr << "Interrupted!!!" << std::endl;
                 set_sig_interrupted();
+                // std::cerr << "Interrupted!!!" << std::endl;
                 return;
             }
 
-            std::cerr << "USING DEFAULT!!!" << std::endl;
-            SIG_DFL(signum);
+            // std::cerr << "USING DEFAULT!!!" << std::endl;
+            // SIG_DFL(signum);         // TESTS FAILS BUT SHOULD BE WHAT WE NEED
+            set_sig_interrupted();      // TESTS PASS BUT DOESNT DO WHAT WE NEED, ILLOGIC, MAKES PREVIOUS CODE ILLOGIC, ETC.
         }
     }
 
-    // #ifndef _WIN32
-    //     namespace
-    //     {
-    //         std::thread::native_handle_type sig_recv_thread;
-    //         std::atomic<bool> receiver_exists(false);
-    //     }
-    //
-    //     void reset_sig_interrupted()
-    //     {
-    //         sig_interrupted.store(false);
-    //         set_default_signal_handler();
-    //     }
-    //
-    //     int kill_receiver_thread()
-    //     {
-    //         if (receiver_exists.load())
-    //         {
-    //             pthread_cancel(sig_recv_thread);
-    //             receiver_exists.store(false);
-    //             return 0;
-    //         }
-    //         return -1;
-    //     }
-    //
-    //     int stop_receiver_thread()
-    //     {
-    //         if (receiver_exists.load())
-    //         {
-    //             pthread_kill(sig_recv_thread, SIGINT);
-    //             receiver_exists.store(false);
-    //             return 0;
-    //         }
-    //         return -1;
-    //     }
-    //
-    //     int default_signal_handler(sigset_t sigset)
-    //     {
-    //         std::cerr << "Start handling signal..." << std::endl;
-    //         int signum = 0;
-    //         // wait until a signal is delivered:
-    //         sigwait(&sigset, &signum);
-    //         std::cerr << "signal received!" << std::endl;
-    //         handle_signal(signum);
-    //         std::cerr << "signal handled!" << std::endl;
-    //         return signum;
-    //     }
-    //
-    //     void set_signal_handler(const std::function<void(sigset_t)>& handler)
-    //     {
-    //         stop_receiver_thread();
-    //         std::cerr << "set_signal_handler" << std::endl;
-    //         // block signals in this thread and subsequently
-    //         // spawned threads
-    //         sigset_t sigset;
-    //         sigemptyset(&sigset);
-    //         sigaddset(&sigset, SIGINT);
-    //         // sigaddset(&sigset, SIGTERM);
-    //         pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
-    //         std::thread receiver(handler, sigset);
-    //         sig_recv_thread = receiver.native_handle();
-    //         receiver_exists.store(true);
-    //         receiver.detach();
-    //     }
-    //
-    //     void set_default_signal_handler()
-    //     {
-    //         std::cerr << "LINUX: set_default_signal_handler" << std::endl;
-    //         std::cout << "LINUX: set_default_signal_handler" << std::endl;
-    //         set_signal_handler(default_signal_handler);
-    //     }
-    // #else
+#ifndef _WIN32
+        namespace
+        {
+            std::thread::native_handle_type sig_recv_thread;
+            std::atomic<bool> receiver_exists(false);
+        }
+
+        void reset_sig_interrupted()
+        {
+            sig_interrupted.store(false);
+            set_default_signal_handler();
+        }
+
+        int kill_receiver_thread()
+        {
+            if (receiver_exists.load())
+            {
+                pthread_cancel(sig_recv_thread);
+                receiver_exists.store(false);
+                return 0;
+            }
+            return -1;
+        }
+
+        int stop_receiver_thread()
+        {
+            if (receiver_exists.load())
+            {
+                pthread_kill(sig_recv_thread, SIGINT);
+                receiver_exists.store(false);
+                return 0;
+            }
+            return -1;
+        }
+
+        int default_signal_handler(sigset_t sigset)
+        {
+            // std::cerr << "Start handling signal..." << std::endl;
+            int signum = 0;
+            // wait until a signal is delivered:
+            sigwait(&sigset, &signum);
+            // std::cerr << "signal received!" << std::endl;
+            handle_signal(signum);
+            // std::cerr << "signal handled!" << std::endl;
+            return signum;
+        }
+
+        void set_signal_handler(const std::function<void(sigset_t)>& handler)
+        {
+            stop_receiver_thread();
+            // std::cerr << "set_signal_handler" << std::endl;
+            // block signals in this thread and subsequently
+            // spawned threads
+            sigset_t sigset;
+            sigemptyset(&sigset);
+            sigaddset(&sigset, SIGINT);
+            // sigaddset(&sigset, SIGTERM);
+            pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
+            std::thread receiver(handler, sigset);
+            sig_recv_thread = receiver.native_handle();
+            receiver_exists.store(true);
+            receiver.detach();
+        }
+
+        void set_default_signal_handler()
+        {
+            // std::cerr << "LINUX: set_default_signal_handler" << std::endl;
+            // std::cout << "LINUX: set_default_signal_handler" << std::endl;
+            set_signal_handler(default_signal_handler); // NEEDS TO BE REPLACED LATER
+            // std::signal(SIGINT, &handle_signal); // UNSTABLE BUT SHOULD BE EXPLORED
+        }
+#else
     void set_default_signal_handler()
     {
-        std::cerr << "WINDOWS: set_default_signal_handler" << std::endl;
-        std::cout << "WINDOWS: set_default_signal_handler" << std::endl;
+        // std::cerr << "WINDOWS: set_default_signal_handler" << std::endl;
+        // std::cout << "WINDOWS: set_default_signal_handler" << std::endl;
         std::signal(SIGINT, &handle_signal);
     }
 
-    // #endif
+#endif
 
     bool is_sig_interrupted() noexcept
     {

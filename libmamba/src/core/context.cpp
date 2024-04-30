@@ -118,7 +118,7 @@ namespace mamba
 
     Context::Context(const ContextOptions& options)
     {
-        printf("Context::context\n");
+        // printf("Context::context\n");
         on_ci = static_cast<bool>(util::get_env("CI"));
         prefix_params.root_prefix = util::get_env("MAMBA_ROOT_PREFIX").value_or("");
         prefix_params.conda_prefix = prefix_params.root_prefix;
