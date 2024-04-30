@@ -61,6 +61,7 @@ namespace mamba
             if (is_interrupt_scope() && !is_sig_interrupted())
             {
                 set_sig_interrupted();
+                // reset_signal_handler();
                 // std::cerr << "Interrupted!!!" << std::endl;
                 return;
             }

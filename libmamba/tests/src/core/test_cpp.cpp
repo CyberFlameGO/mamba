@@ -146,17 +146,17 @@ namespace mamba
         }
 
         // TO TEST THE C++ ctrl+C case, uncomment this , build+install and manually run: ./libmamba/tests/test_libmamba -ts=context -tc=sig_int
-        // TEST_CASE("sig_int")
-        // {
-        //     LOG_ERROR << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTEST";
-        //     //             auto& ctx = mambatests::context();
-        //     //             ctx.use_default_signal_handler(false);
-        //     interrupt_scope inter;
-        //     mamba::set_default_signal_handler();
-        //     using namespace std::chrono_literals;
-        //     std::this_thread::sleep_for(10000ms);  // 10sec
-        //     CHECK(false);
-        // }
+        TEST_CASE("sig_int")
+        {
+            LOG_ERROR << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTEST";
+            //             auto& ctx = mambatests::context();
+            //             ctx.use_default_signal_handler(false);
+            // interrupt_scope inter;
+            mamba::set_default_signal_handler();
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10s);
+            CHECK(false);
+        }
     }
 
     TEST_SUITE("fsutil")
